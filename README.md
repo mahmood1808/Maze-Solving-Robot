@@ -49,9 +49,9 @@ An advanced Arduino-based autonomous robot designed to navigate and solve comple
 
 -----
 
-## 📸 Project Gallery
+## Project Gallery
 
-### 🤖 Robot Design & Maze Testing
+### Robot Design & Maze Testing
 Here are the shots of our maze-solving robot during development and testing phases:
 
 | Phase 1: Construction | Phase 2: Maze Testing |
