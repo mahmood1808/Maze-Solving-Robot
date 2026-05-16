@@ -13,7 +13,7 @@ An advanced Arduino-based autonomous robot designed to navigate and solve comple
 * **Intersection Debouncing:** Employs a continuous sampling counter (`rightOpenCounter`) to confirm true openings, avoiding false-positive triggers caused by slight wall irregularities.
 
 ---
-## 🛠️ Hardware Components & Tools
+## Hardware Components & Tools
 
 | Component | Model / Specification | Quantity | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -26,7 +26,7 @@ An advanced Arduino-based autonomous robot designed to navigate and solve comple
 | **Caster Wheel** | Mini Omnidirectional Wheel | 1 | Balance and smooth steering |
 | **Breadboard & Wires** | Mini Breadboard & Jumper Wires | 1 | Circuit prototyping and connections |
 ---
-## 🔌 Circuit Schematic & Wiring Guide
+## Circuit Schematic & Wiring Guide
 
 ### 1. Ultrasonic Sensors Connections
 | Sensor | Arduino Pin (Trig) | Arduino Pin (Echo) | VCC / GND |
