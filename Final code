@@ -1,0 +1,230 @@
+// ===== SENSORS =====
+const int trigF = 2;  const int echoF = 3;
+const int trigR = 4;  const int echoR = 13;
+const int trigL = 6;  const int echoL = 7;
+
+// ===== MOTOR DRIVER =====
+const int enA = 9;   const int in1 = 8;   const int in2 = 10;
+const int enB = 5;   const int in3 = 11;  const int in4 = 12;
+
+// ===== SPEED / CONTROL =====
+int baseSpeed   = 145;
+int searchSpeed = 125;
+
+int targetDist = 7;
+float Kp = 30.0;
+float Kd = 15.0;
+
+int frontLimit = 5;
+int openThreshold = 22;
+
+int wallPresentDist = 18;
+int wallLostDist    = 24;
+
+// ===== TURN TIMINGS =====
+const unsigned long TURN_KICK_MS   = 90;
+const unsigned long RIGHT_TURN_MS   = 600;
+const unsigned long LEFT_TURN_MS    = 600;
+const unsigned long UTURN_MS        = 1220;
+const int TURN_PWM_FAST = 255;
+const int TURN_PWM_SLOW = 190;
+
+// ===== STATE =====
+enum Mode { MODE_FOLLOW, MODE_TURN };
+enum TurnKind { TURN_NONE, TURN_RIGHT_KIND, TURN_LEFT_KIND, TURN_UTURN_KIND };
+
+Mode mode = MODE_FOLLOW;
+TurnKind currentTurn = TURN_NONE;
+
+unsigned long turnStart = 0;
+unsigned long turnDuration = 0;
+
+bool rightWallSeen = false;
+int lastError = 0;
+
+// ===== NEW (FIX) =====
+int rightOpenCounter = 0;
+
+// =======================
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(trigF, OUTPUT); pinMode(echoF, INPUT);
+  pinMode(trigR, OUTPUT); pinMode(echoR, INPUT);
+  pinMode(trigL, OUTPUT); pinMode(echoL, INPUT);
+
+  pinMode(enA, OUTPUT); pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT); pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT); pinMode(in4, OUTPUT);
+
+  stopRobot();
+}
+
+void loop() {
+  if (mode == MODE_TURN) {
+    updateTurn();
+    return;
+  }
+
+  int f = getFiltered(trigF, echoF);
+  int r = getFiltered(trigR, echoR);
+
+  // ===== RIGHT WALL =====
+  if (r <= wallPresentDist) rightWallSeen = true;
+  else if (r >= wallLostDist) rightWallSeen = false;
+
+  // ===== RIGHT OPEN CONFIRMATION =====
+  if (r >= openThreshold) {
+    rightOpenCounter++;
+  } else {
+    rightOpenCounter = 0;
+  }
+
+  Serial.print("F:"); Serial.print(f);
+  Serial.print(" R:"); Serial.print(r);
+  Serial.print(" Counter:"); Serial.println(rightOpenCounter);
+
+  // ===== FRONT WALL =====
+  if (f <= frontLimit) {
+    stopRobot();
+
+    int l = getFiltered(trigL, echoL);
+
+    if (r >= openThreshold && r >= l) {
+      startTurn(TURN_RIGHT_KIND, RIGHT_TURN_MS);
+      return;
+    }
+
+    if (l >= openThreshold) {
+      startTurn(TURN_LEFT_KIND, LEFT_TURN_MS);
+      return;
+    }
+
+    startTurn(TURN_UTURN_KIND, UTURN_MS);
+    return;
+  }
+
+  // ===== FIXED RIGHT TURN CONDITION =====
+  // لازم يكون قريب من التقاطع (مش بعيد)
+  if (rightWallSeen && rightOpenCounter >= 2 && f < 15 && f > frontLimit) {
+    startTurn(TURN_RIGHT_KIND, RIGHT_TURN_MS);
+    return;
+  }
+
+  // ===== FOLLOW =====
+  if (rightWallSeen) {
+    followRightWall(r);
+  } else {
+    moveRobot(searchSpeed, searchSpeed);
+  }
+}
+
+// ===== FOLLOW =====
+void followRightWall(int r) {
+  int error = targetDist - r;
+  int dError = error - lastError;
+
+  float adjust = (Kp * error) + (Kd * dError);
+
+  int rightSpeed = (int)(baseSpeed + adjust);
+  int leftSpeed  = (int)(baseSpeed - adjust);
+
+  rightSpeed = constrain(rightSpeed, 0, 255);
+  leftSpeed  = constrain(leftSpeed, 0, 255);
+
+  moveRobot(rightSpeed, leftSpeed);
+
+  lastError = error;
+}
+
+// ===== TURN =====
+void startTurn(TurnKind kind, unsigned long duration) {
+  currentTurn = kind;
+  turnDuration = duration;
+  turnStart = millis();
+  mode = MODE_TURN;
+
+  driveTurn(kind, TURN_PWM_FAST);
+}
+
+void updateTurn() {
+  unsigned long elapsed = millis() - turnStart;
+
+  if (elapsed >= turnDuration) {
+    stopRobot();
+    mode = MODE_FOLLOW;
+    currentTurn = TURN_NONE;
+    lastError = 0;
+    rightOpenCounter = 0;
+    return;
+  }
+
+  int pwm = (elapsed < TURN_KICK_MS) ? TURN_PWM_FAST : TURN_PWM_SLOW;
+  driveTurn(currentTurn, pwm);
+}
+
+void driveTurn(TurnKind kind, int pwm) {
+  if (kind == TURN_RIGHT_KIND || kind == TURN_UTURN_KIND) {
+    digitalWrite(in1, LOW);  digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH); digitalWrite(in4, LOW);
+  } else {
+    digitalWrite(in1, HIGH); digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);  digitalWrite(in4, HIGH);
+  }
+
+  analogWrite(enA, pwm);
+  analogWrite(enB, pwm);
+}
+
+// ===== FILTER =====
+int getFiltered(int trig, int echoPin) {
+  int a = getDistance(trig, echoPin);
+  delayMicroseconds(700);
+  int b = getDistance(trig, echoPin);
+  delayMicroseconds(700);
+  int c = getDistance(trig, echoPin);
+
+  if (a > b) swapInt(a, b);
+  if (b > c) swapInt(b, c);
+  if (a > b) swapInt(a, b);
+
+  return b;
+}
+
+void swapInt(int &x, int &y) {
+  int t = x;
+  x = y;
+  y = t;
+}
+
+// ===== SENSOR =====
+int getDistance(int trig, int echoPin) {
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+
+  unsigned long duration = pulseIn(echoPin, HIGH, 25000UL);
+  if (duration == 0) return 100;
+
+  int dist = (int)(duration * 0.034 / 2.0);
+
+  if (dist <= 0 || dist > 400) return 100;
+  return dist;
+}
+
+// ===== MOTION =====
+void moveRobot(int sR, int sL) {
+  digitalWrite(in1, HIGH); digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH); digitalWrite(in4, LOW);
+
+  analogWrite(enA, constrain(sR, 0, 255));
+  analogWrite(enB, constrain(sL, 0, 255));
+}
+
+void stopRobot() {
+  analogWrite(enA, 0);
+  analogWrite(enB, 0);
+}
