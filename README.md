@@ -60,7 +60,7 @@ The code is highly modularized for easy testing and debugging:
 ##  How to Flash & Run
 
 1. Open the project inside **PlatformIO** or **Visual Studio Code** (with the Arduino Extension).
-2. Wire up the components according to the [Hardware Mapping](#-hardware-architecture) table above.
+2. Wire up the components according to the Hardware Mapping table above.
 3. Make sure to choose your target board (e.g., **Arduino Uno / Mega**).
 4. Compile and upload! Open your Serial Monitor at `115200 baud` to view real-time filtering data and path confirmation ticks.
 5. ---
