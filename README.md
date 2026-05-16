@@ -49,6 +49,16 @@ An advanced Arduino-based autonomous robot designed to navigate and solve comple
 
 -----
 
+## 📸 Project Gallery
+
+### 🤖 Robot Design & Maze Testing
+Here are the shots of our maze-solving robot during development and testing phases:
+
+| Phase 1: Construction | Phase 2: Maze Testing |
+| :---: | :---: |
+| ![Maze Solver 1](media/maze1.jpeg) | ![Maze Solver 2](media/maze2.jpeg) |
+
+
 ##  System Logic & Control Flow
 
 The codebase divides the robot's lifecycle into two primary runtime states managed inside `loop()`:
