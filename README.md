@@ -13,21 +13,41 @@ An advanced Arduino-based autonomous robot designed to navigate and solve comple
 * **Intersection Debouncing:** Employs a continuous sampling counter (`rightOpenCounter`) to confirm true openings, avoiding false-positive triggers caused by slight wall irregularities.
 
 ---
+## 🛠️ Hardware Components & Tools
 
-##  Hardware Architecture
-
-### Pin Configuration Mapping
-
-| Module Component | Arduino Pin | Description |
-| :--- | :---: | :--- |
-| **Front Sensor (`Trig` / `Echo`)** | `D2` / `D3` | Detects walls directly ahead to trigger intersection turns. |
-| **Right Sensor (`Trig` / `Echo`)** | `D4` / `D13` | Primary wall-following reference sensor. |
-| **Left Sensor (`Trig` / `Echo`)** | `D6` / `D7` | Verification sensor for dead-ends and left turns. |
-| **Motor Driver `IN1` / `IN2`** | `D8` / `D10` | H-Bridge Control: Right Motor Direction. |
-| **Motor Driver `IN3` / `IN4`** | `D11` / `D12`| H-Bridge Control: Left Motor Direction. |
-| **Motor Driver `enA` / `enB`** | `D9` / `D5` | **PWM Enabled Pins** for variable speed adjustments. |
-
+| Component | Model / Specification | Quantity | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Microcontroller** | Arduino Uno (or Nano/ESP32) | 1 | Main processing unit |
+| **Ultrasonic Sensors** | HC-SR04 | 3 | Distance measurement (Front, Right, Left) |
+| **Motor Driver** | L298N Dual H-Bridge | 1 | Controls DC motors speed and direction |
+| **DC Gear Motors** | 5V-9V Yellow Smart Car Motors | 2 | Robot locomotion |
+| **Power Source** | 2x 18650 Li-ion Batteries (7.4V) | 1 | High-current power supply |
+| **Chassis** | 2-Wheel Acrylic/3D Printed Chassis | 1 | Robot body structure |
+| **Caster Wheel** | Mini Omnidirectional Wheel | 1 | Balance and smooth steering |
+| **Breadboard & Wires** | Mini Breadboard & Jumper Wires | 1 | Circuit prototyping and connections |
 ---
+## 🔌 Circuit Schematic & Wiring Guide
+
+### 1. Ultrasonic Sensors Connections
+| Sensor | Arduino Pin (Trig) | Arduino Pin (Echo) | VCC / GND |
+| :--- | :--- | :--- | :--- |
+| **Front Sensor** | `Pin 2` | `Pin 3` | 5V / GND |
+| **Right Sensor** | `Pin 4` | `Pin 13` | 5V / GND |
+| **Left Sensor** | `Pin 6` | `Pin 7` | 5V / GND |
+
+### 2. L298N Motor Driver Connections
+| Driver Pin | Arduino Pin | Function |
+| :--- | :--- | :--- |
+| **enA** | `Pin 9` (PWM) | Right Motor Speed Control |
+| **in1** | `Pin 8` | Right Motor Direction 1 |
+| **in2** | `Pin 10` | Right Motor Direction 2 |
+| **enB** | `Pin 5` (PWM) | Left Motor Speed Control |
+| **in3** | `Pin 11` | Left Motor Direction 1 |
+| **in4** | `Pin 12` | Left Motor Direction 2 |
+
+⚠️ *Important Note on Power:* Connect the *GND* of the Arduino to the *GND* of the L298N motor driver and the battery pack (Common Ground) to avoid erratic motor behavior or sensor reset loops.
+
+-----
 
 ##  System Logic & Control Flow
 
